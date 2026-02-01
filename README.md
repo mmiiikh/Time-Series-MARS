@@ -19,12 +19,13 @@ Docker environment required to run the code in an isolated container.
 
 ```bash
 docker build -t time-series-mars .
+```
 
 ## Run Container
 
 ```bash
 docker run --rm time-series-mars
-
+```
 Expected Outcome: Time-Series-MARS project is running in Docker
 
 ## Notes
