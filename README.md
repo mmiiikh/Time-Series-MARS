@@ -8,6 +8,7 @@ Docker environment required to run the code in an isolated container.
 2) README.md
 3) requirements.txt
 4) src
+   
     4.1.) main.py
 
 ## Requirements
