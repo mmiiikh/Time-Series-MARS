@@ -1,0 +1,7 @@
+[core]
+    remote = yandex_s3
+['remote "gdrive"']
+    url = gdrive://18So1gHDqp0IGlY_9IO7QsLrQ254r8r_I?hl=ru
+['remote "yandex_s3"']
+    url = s3://mlops-mikhaylova/mars
+    endpointurl = https://storage.yandexcloud.net
