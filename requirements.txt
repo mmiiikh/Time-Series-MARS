@@ -1,1 +1,6 @@
+pandas
 numpy
+statsmodels
+scikit-learn
+psycopg2-binary
+openpyxl
