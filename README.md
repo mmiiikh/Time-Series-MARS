@@ -42,11 +42,15 @@ DB_USER=mars_user
 DB_PASSWORD=mars_password
 
 4. Из папки docker поднять контейнеры и проверить что они запущены: docker-compose up --build
+
 Дополнительно можно напсиать команду docker-compose exec app dvc pull для проверки подтягивания данных из dvc.
 
 Как итог отработки в терминале отображается:
+
 mars_app       | SARIMA model trained successfully
+
 mars_app       | MAPE: 2.97%
+
 mars_app       | Result saved to PostgreSQL
 
 Результат сохраняется в базе PostgreSQL (table: results)
