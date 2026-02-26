@@ -4,3 +4,7 @@ statsmodels
 scikit-learn
 psycopg2-binary
 openpyxl
+fastapi
+uvicorn
+celery
+redis
