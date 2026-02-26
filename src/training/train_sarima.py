@@ -8,7 +8,7 @@ from src.utils.db import init_tables, save_result
 TEST_SIZE = 6
 
 
-def main():
+def train_sarima():
     df = load_raw_data()
     ts = prepare_total_sales(df)
 
@@ -32,6 +32,7 @@ def main():
     print(f"MAPE: {score:.2f}%")
     print("Result saved to PostgreSQL")
 
+    return score
 
 if __name__ == "__main__":
-    main()
+    train_sarima()
