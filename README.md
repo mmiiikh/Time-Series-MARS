@@ -69,6 +69,9 @@ Result saved to PostgreSQL
 
 Task succeeded
 
+<img width="1512" height="982" alt="Снимок экрана 2026-02-26 в 21 41 21" src="https://github.com/user-attachments/assets/a5a339bb-9bfa-4937-a554-b9ff1d7faa37" />
+
+
 # Проверка базы данных
 
 docker-compose exec postgres psql -U mars_user -d mars
