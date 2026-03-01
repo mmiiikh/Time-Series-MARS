@@ -1,14 +1,8 @@
 from fastapi import FastAPI
 from src.worker.tasks import train_sarima_task
-from src.utils.db import create_task, get_task, init_tables
+from src.utils.db import create_task, get_task
 
 app = FastAPI()
-
-
-@app.on_event("startup")
-def startup():
-    init_tables()
-
 
 @app.post("/train")
 def start_training():

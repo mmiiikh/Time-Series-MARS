@@ -1,4 +1,15 @@
 services:
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    container_name: mars_nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - app
+      - static
+
   postgres:
     image: postgres:15
     container_name: mars_postgres
@@ -6,16 +17,16 @@ services:
       POSTGRES_DB: mars
       POSTGRES_USER: mars_user
       POSTGRES_PASSWORD: mars_password
-    ports:
-      - "5432:5432"
+    #ports:
+    #  - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
   redis:
     image: redis:7
     container_name: mars_redis
-    ports:
-      - "6379:6379"
+    #ports:
+    #  - "6379:6379"
 
   app:
     build:
@@ -41,10 +52,15 @@ services:
       #- "8000:8000"
     volumes:
       - ..:/app
-    ports:
-      - "8000:8000"
-    tty: true
-    command: []
+#    ports:
+#      - "8000:8000"
+#    tty: true
+#    command: []
+  static:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.static
+    container_name: mars_static
 
   worker:
     build:
@@ -58,7 +74,7 @@ services:
       - .env
     volumes:
       - ..:/app
-    tty: true
+    #tty: true
     entrypoint: [ "bash", "docker/entrypoint.sh", "worker" ]
     #environment:
 #      DB_HOST: postgres
