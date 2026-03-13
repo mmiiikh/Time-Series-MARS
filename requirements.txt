@@ -8,3 +8,10 @@ fastapi
 uvicorn
 celery
 redis
+matplotlib
+streamlit
+pmdarima
+plotly
+mlflow
+requests
+python-multipart

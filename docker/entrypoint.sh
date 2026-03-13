@@ -1,22 +1,15 @@
 #!/bin/bash
 set -e
 
-echo "Pulling data from DVC remote"
-dvc pull
-
-if [ "$1" = "worker" ]; then
-    echo "Starting Celery worker"
-    celery -A src.worker.celery_app worker --loglevel=info
-else
-    echo "Initializing database"
-    python src/scripts/init_db.py
-
-    echo "Starting FastAPI server"
-    gunicorn src.api.main:app \
-        -k uvicorn.workers.UvicornWorker \
-        --bind 0.0.0.0:8000 \
-        --workers 4
-fi
-
-#echo "Running SARIMA training..."
-#python src/training/train_sarima.py
+case "$1" in
+  api)
+    exec uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
+    ;;
+  ui)
+    exec streamlit run src/ui/app.py --server.port 8501 --server.address 0.0.0.0
+    ;;
+  *)
+    echo "Укажи команду: api или ui"
+    exit 1
+    ;;
+esac

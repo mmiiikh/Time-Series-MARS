@@ -23,3 +23,7 @@ TestResults.xml
 AWSCLIV2.pkg
 .env
 docker/.env
+data/raw/mars_data.xlsx
+data/processed/
+data/features/
+mlruns/
