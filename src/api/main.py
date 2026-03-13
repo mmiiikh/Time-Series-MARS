@@ -4,6 +4,10 @@ from src.utils.db import create_task, get_task
 
 app = FastAPI()
 
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
 @app.post("/train")
 def start_training():
     task_id = create_task("SARIMA")
@@ -11,8 +15,7 @@ def start_training():
 
     return {
         "task_id": task_id,
-        "status": "PENDING"
-    }
+        "status": "PENDING"}
 
 
 @app.get("/status/{task_id}")

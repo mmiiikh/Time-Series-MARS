@@ -14,8 +14,7 @@ class SarimaModel:
             order=self.order,
             seasonal_order=self.seasonal_order,
             enforce_stationarity=False,
-            enforce_invertibility=False,
-        )
+            enforce_invertibility=False)
         self.result = model.fit(disp=False)
 
     def forecast(self, steps: int):

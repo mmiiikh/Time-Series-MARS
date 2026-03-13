@@ -17,8 +17,7 @@ def train_sarima():
 
     model = SarimaModel(
         order=(0, 1, 0),
-        seasonal_order=(0, 1, 0, 12),
-    )
+        seasonal_order=(0, 1, 0, 12))
 
     model.fit(train)
     forecast = model.forecast(TEST_SIZE)
