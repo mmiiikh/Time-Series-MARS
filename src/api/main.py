@@ -1,20 +1,23 @@
 from fastapi import FastAPI
-from src.worker.tasks import train_sarima_task
-from src.utils.db import create_task, get_task
+from fastapi.middleware.cors import CORSMiddleware
+from src.api.routes import router
 
-app = FastAPI()
+app = FastAPI(
+    title="Mars Sales Forecasting",
+    description="API для прогнозирования продаж Mars",
+    version="1.0.0",
+)
 
-@app.post("/train")
-def start_training():
-    task_id = create_task("SARIMA")
-    train_sarima_task.delay(task_id)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-    return {
-        "task_id": task_id,
-        "status": "PENDING"
-    }
+app.include_router(router)
 
 
-@app.get("/status/{task_id}")
-def get_status(task_id: int):
-    return get_task(task_id)
+@app.get("/health", tags=["Health"])
+def health():
+    return {"status": "ok"}
