@@ -1,47 +1,108 @@
 # Time-Series-MARS
-Repository for code base of time series model to forecast sales of MARS
 
-В этом чекпоинте реализован сервис для обучения модели SARIMA через асинхронные задачи. Основные компоненты:
+### Требования
+- [Docker](https://www.docker.com/)
+- [minikube](https://minikube.sigs.k8s.io/docs/start/)
+- [kubectl](https://kubernetes.io/docs/tasks/tools/)
+- [DVC](https://dvc.org/) с доступом к Yandex S3
 
-	1.	FastAPI (веб-сервис с эндпоинтами для запуска обучения и проверки статуса задачи)
-	
-	2.	Celery (очередь задач для асинхронного выполнения обучения модели)
-	
-	3.	Redis (брокер задач для Celery)
-	
-	4.	PostgreSQL (хранение информации о задачах и их статусе)
-	
-	5.	DVC (управление данными и чекпоинтами модели)
-	
-	6.	NGINX (прокси для FastAPI на порту 80)
+Установка на Mac:
+```bash
+brew install minikube kubectl
+pip install dvc[s3]
+```
 	
 
-# Как запустить
+### 1. Клонировать репозиторий
+```bash
+git clone https://github.com/mmiiikh/Time-Series-MARS.git
+cd Time-Series-MARS
+git checkout checkpoint_5
+```
 
-Как и в прошлых чекпоинтах нужно создать .env файл в папке docker для запуска (передать AWS и DB параметры - см. README прошлых чекпоинтов)
+### 2. Подтянуть данные через DVC
+```bash
+dvc pull
+```
+Потребуются ключи доступа к Yandex S3 (запросите у меня)
 
-1. Собрать и поднять контейнеры через Docker Compose: docker-compose up --build
+### 3. Создать файл с секретами
+Создать файл `k8s/secret.yaml` (не хранится в репозитории):
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mars-secret
+type: Opaque
+stringData:
+  DB_PASSWORD: mars_password
+  POSTGRES_PASSWORD: mars_password
+  AWS_ACCESS_KEY_ID: [авторский код :) ]
+  AWS_SECRET_ACCESS_KEY: [авторский код :)]
+  AWS_DEFAULT_REGION: ru-central1
+```
 
-2. Должны быть запущены: app, worker, redis, postgres, nginx, static.
+### 4. Запустить minikube
+```bash
+minikube start
+```
 
-3. Отправить задачу на обучение модели SARIMA: curl -X POST http://localhost/train
+### 5. Переключиться на docker внутри minikube
+```bash
+eval $(minikube docker-env)
+```
 
-	(либо можно проверить в вебе по 80 порту)
+### 6. Собрать образы
+```bash
+docker build -t mars-app:latest -f docker/Dockerfile .
+docker build -t mars-nginx:latest -f docker/Dockerfile.nginx docker/
+docker build -t mars-static:latest -f docker/Dockerfile.static .
+```
 
-	В ответ придет JSON с task_id и статусом PENDING, например:
+### 7. Применить конфигурации
+```bash
+kubectl apply -f k8s/
+```
 
-	{
-  	"task_id": 1,
-  	"status": "PENDING"
-	}
+### 8. Дождаться запуска всех подов
+```bash
+kubectl get pods -w
+```
+Все поды должны перейти в статус `Running`.
 
-4. Проверять статус задачи: curl http://localhost/status/1
+### 9.Получить URL сервиса(оставить терминал открытым)
+```bash
+minikube service nginx --url
+```
 
-   Будет один из статусов: PENDING-задача поставлена в очередь, но еще не выполнена, SUCCESS-задача выполнена успешно, FAILURE-произошла ошибка при обучении
+### Проверка работы
 
-	На вызоде должно получиться следующее:
-<img width="1396" height="749" alt="Снимок экрана 2026-03-01 в 14 52 31" src="https://github.com/user-attachments/assets/65a41081-5d01-45eb-8df2-ee16c66c0e4f" />
+В новом терминале использовать URL из предыдущего шага:
+```bash
+# Проверить health
+curl http:///health
 
+# Запустить обучение модели
+curl -X POST http:///train
 
+# Получить статус задачи (task_id из ответа выше)
+curl http:///status/
+```
 
-  
+Ожидаемые ответы:
+```json
+// GET /health
+{"status": "ok"}
+
+// POST /train
+{"task_id": 1, "status": "PENDING"}
+
+// GET /status/1
+{"id": 1, "model_name": "SARIMA", "status": "SUCCESS", "mape": 2.97, "created_at": "..."}
+```
+
+### Остановка
+```bash
+kubectl delete -f k8s/
+minikube stop
+```
