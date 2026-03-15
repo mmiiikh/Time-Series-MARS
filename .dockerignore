@@ -1,0 +1,12 @@
+.git
+.gitignore
+.dvc
+.dvc/cache
+.venv
+.venv*
+__pycache__
+.idea
+data/raw
+data/processed
+models
+*.ipynb

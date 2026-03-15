@@ -20,3 +20,8 @@ rad.json
 *.flf
 #Test results file
 TestResults.xml
+AWSCLIV2.pkg
+.env
+docker/.env__pycache__/
+*.pyc
+*.pyo
