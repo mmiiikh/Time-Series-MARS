@@ -1,0 +1,114 @@
+services:
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    container_name: mars_nginx
+    ports:
+      - "80:80"
+    depends_on:
+      app:
+        condition: service_healthy
+      static:
+        condition: service_started
+
+  postgres:
+    image: postgres:15
+    container_name: mars_postgres
+    environment:
+      POSTGRES_DB: mars
+      POSTGRES_USER: mars_user
+      POSTGRES_PASSWORD: mars_password
+    #ports:
+    #  - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U mars_user -d mars" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    image: redis:7
+    container_name: mars_redis
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    #ports:
+    #  - "6379:6379"
+
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: mars_app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env
+    #environment:
+      #AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      #AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      #AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION}
+      #DB_HOST: postgres
+      #DB_PORT: 5432
+      #DB_NAME: mars
+      #DB_USER: mars_user
+      #DB_PASSWORD: mars_password
+    #command: uvicorn src.api.main:app --host 0.0.0.0 --port 8000
+    #ports:
+      #- "8000:8000"
+    volumes:
+      - ..:/app
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8000/health || exit 1" ]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+#    ports:
+#      - "8000:8000"
+#    tty: true
+#    command: []
+  static:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.static
+    container_name: mars_static
+
+  worker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: mars_worker
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env
+    volumes:
+      - ..:/app
+    #tty: true
+    entrypoint: [ "bash", "docker/entrypoint.sh", "worker" ]
+    #environment:
+#      DB_HOST: postgres
+#      DB_PORT: 5432
+#      DB_NAME: mars
+#      DB_USER: mars_user
+#      DB_PASSWORD: mars_password
+#    command: celery -A src.worker.celery_app worker --loglevel=info
+
+
+
+volumes:
+  postgres_data:

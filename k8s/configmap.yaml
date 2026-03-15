@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mars-config
+data:
+  DB_HOST: postgres
+  DB_PORT: "5432"
+  DB_NAME: mars
+  DB_USER: mars_user
+  REDIS_URL: redis://redis:6379/0
