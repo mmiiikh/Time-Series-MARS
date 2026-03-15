@@ -22,4 +22,6 @@ rad.json
 TestResults.xml
 AWSCLIV2.pkg
 .env
-docker/.env
+docker/.env__pycache__/
+*.pyc
+*.pyo
