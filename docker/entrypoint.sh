@@ -1,7 +1,6 @@
 #!/bin/bash
 set -e
 
-echo "Pulling data from DVC remote"
 dvc pull
 
 if [ "$1" = "worker" ]; then

@@ -1,12 +1,10 @@
-.git
 .gitignore
-.dvc
 .dvc/cache
 .venv
 .venv*
 __pycache__
 .idea
-data/raw
+data/raw/mars_data.xlsx
 data/processed
 models
 *.ipynb
