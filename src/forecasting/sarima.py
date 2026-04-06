@@ -430,6 +430,158 @@ def select_best_and_save(results_sarimax: dict, results_sarima: dict,
     return manifest
 
 
+def train_arima(series_dict: dict, test_size: int = 12) -> dict:
+    """
+    Обучает чистую ARIMA(p,d,q) для каждого ряда — без сезонной компоненты,
+    без экзогенных переменных.
+
+    Отличие от SARIMA:
+      SARIMA = SARIMAX(p,d,q)(P,D,Q)[12] — учитывает сезонность
+      ARIMA  = ARIMA(p,d,q)              — только несезонная структура
+
+    Используется для сравнения в консольном отчёте (не логируется в MLflow).
+    Порядок подбирается индивидуально через auto_arima с seasonal=False.
+    """
+    results = {}
+    total   = len(series_dict)
+    print(f"\nARIMA: обучение {total} рядов...")
+
+    for i, (key, df_) in enumerate(series_dict.items(), 1):
+        cat, ch = key
+        y = df_[TARGET_COL].dropna()
+
+        if len(y) < 2 * test_size:
+            print(f"  [{i}/{total}] {cat} | {ch} — пропущен (мало данных: {len(y)})")
+            continue
+
+        y_train = y.iloc[:-test_size]
+        y_test  = y.iloc[-test_size:]
+
+        try:
+            am = auto_arima(
+                y_train,
+                seasonal=False,          # ARIMA, не SARIMA
+                d=None,                  # автоматический порядок интегрирования
+                max_p=3, max_q=3,
+                information_criterion="aic",
+                stepwise=True,
+                error_action="ignore",
+                suppress_warnings=True,
+                random_state=RANDOM_STATE,
+            )
+            order = am.order  # (p, d, q)
+        except Exception as e:
+            print(f"  [{i}/{total}] {cat} | {ch} — auto_arima ошибка: {e}, fallback ARIMA(1,1,1)")
+            order = (1, 1, 1)
+
+        try:
+            fitted = SARIMAX(
+                y_train,
+                order=order,
+                seasonal_order=(0, 0, 0, 0),  # без сезонной компоненты
+                enforce_stationarity=False,
+                enforce_invertibility=False,
+            ).fit(disp=False, maxiter=300)
+        except Exception as e:
+            print(f"  [{i}/{total}] {cat} | {ch} — SARIMAX fit ошибка: {e}")
+            continue
+
+        forecast_test = fitted.forecast(steps=test_size)
+        metrics       = compute_metrics(y_test.values, forecast_test.values)
+
+        print(f"  [{i}/{total}] {cat[:20]:<20} | {ch:<24}  "
+              f"ARIMA{order}  MAPE={metrics['mape']:.1f}%")
+
+        results[key] = {
+            "order":          order,
+            "seasonal_order": (0, 0, 0, 0),
+            "model_type":     "ARIMA",
+            "y_train":        y_train,
+            "y_test":         y_test,
+            "forecast_test":  forecast_test,
+            "metrics":        metrics,
+            "aic":            fitted.aic,
+        }
+
+    return results
+
+
+def compare_all_models(
+    results_sarimax: dict,
+    results_sarima:  dict,
+    results_naive:   dict,
+    results_arima:   dict,
+    metric: str = "mape",
+) -> pd.DataFrame:
+    """
+    Строит сводную таблицу MAPE для всех четырёх моделей по каждому ряду.
+    Выводит в консоль и возвращает DataFrame.
+    Не логирует в MLflow.
+    """
+    all_keys = (
+        set(results_sarimax)
+        | set(results_sarima)
+        | set(results_naive)
+        | set(results_arima)
+    )
+
+    rows = []
+    for key in sorted(all_keys):
+        cat, ch = key
+        row = {"Категория": cat, "Канал": ch}
+
+        for label, res_dict in [
+            ("Naive",   results_naive),
+            ("ARIMA",   results_arima),
+            ("SARIMA",  results_sarima),
+            ("SARIMAX", results_sarimax),
+        ]:
+            res = res_dict.get(key)
+            val = None
+            if res is not None:
+                val = res["metrics"].get(metric)
+                if isinstance(val, float) and np.isnan(val):
+                    val = None
+            row[f"{label} MAPE,%"] = round(float(val), 2) if val is not None else None
+
+        # Победитель по метрике среди доступных моделей
+        candidates = {
+            label: row[f"{label} MAPE,%"]
+            for label in ("Naive", "ARIMA", "SARIMA", "SARIMAX")
+            if row.get(f"{label} MAPE,%") is not None
+        }
+        row["Лучшая"] = min(candidates, key=candidates.get) if candidates else "—"
+        rows.append(row)
+
+    df = pd.DataFrame(rows)
+
+    # ── Вывод в консоль ──────────────────────────────────────────────────────
+    sep = "=" * 100
+    print(f"\n{sep}")
+    print("СРАВНЕНИЕ ВСЕХ МОДЕЛЕЙ (MAPE на тестовом периоде, %)")
+    print(sep)
+    print(df.to_string(index=False))
+
+    # Сводка по победителям
+    print(f"\n{'─' * 50}")
+    print("Победитель по рядам:")
+    for label in ("Naive", "ARIMA", "SARIMA", "SARIMAX"):
+        n = (df["Лучшая"] == label).sum()
+        if n:
+            print(f"  {label:<10}: {n} рядов")
+
+    # Медианы
+    print(f"\nМедианный MAPE по всем рядам:")
+    for label in ("Naive", "ARIMA", "SARIMA", "SARIMAX"):
+        col = f"{label} MAPE,%"
+        if col in df.columns:
+            med = df[col].dropna().median()
+            print(f"  {label:<10}: {med:.2f}%")
+    print(sep)
+
+    return df
+
+
 def load_manifest() -> dict:
     if not MANIFEST_PATH.exists():
         raise FileNotFoundError(
