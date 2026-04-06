@@ -15,3 +15,11 @@ plotly
 mlflow
 requests
 python-multipart
+lightgbm
+xgboost
+boruta
+mapie
+shap
+optuna
+mlflow
+seaborn

@@ -14,6 +14,8 @@ from src.forecasting.sarima import (
     train_seasonal_naive,
     train_sarima_no_exog,
     select_best_and_save,
+    train_arima,
+    compare_all_models,
 )
 
 
@@ -50,6 +52,21 @@ def run_training(use_individual_order: bool = True, test_size: int = 12):
 
     print("\nЛогирование в MLflow")
     _log_to_mlflow(manifest, results_sarimax, results_sarima, results_naive, global_order)
+
+    # ── ARIMA (без сезонности, без экзогенных) ────────────────────────────────
+    # Добавляется после MLflow — не влияет на существующие логи и манифест.
+    # ARIMA не участвует в select_best_and_save и не обновляет manifest.json.
+    print("\nОбучение ARIMA (без сезонности)")
+    results_arima = train_arima(series_dict, test_size=test_size)
+
+    # Сравнительная таблица (только консоль + файл)
+    comparison_df = compare_all_models(
+        results_sarimax, results_sarima, results_naive, results_arima
+    )
+
+    out_path = RESULTS_DIR / "sarima_arima_comparison.csv"
+    comparison_df.to_csv(out_path, index=False)
+    print(f"\n  Сравнение сохранено: {out_path}")
 
     print("\nОбучение завершено")
     return manifest
