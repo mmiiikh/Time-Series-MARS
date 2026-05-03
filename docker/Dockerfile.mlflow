@@ -1,0 +1,9 @@
+FROM python:3.10-slim
+
+RUN pip install --no-cache-dir 'mlflow==3.10.1'
+
+WORKDIR /mlflow
+
+EXPOSE 5001
+
+CMD ["mlflow", "server", "--host", "0.0.0.0", "--port", "5001", "--backend-store-uri", "sqlite:///mlruns/mlflow.db", "--default-artifact-root", "/mlflow/mlruns", "--allowed-hosts", "*"]

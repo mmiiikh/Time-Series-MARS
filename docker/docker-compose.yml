@@ -1,4 +1,28 @@
 services:
+
+  mlflow:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mlflow
+    container_name: mars_mlflow
+    ports:
+      - "5001:5001"
+    volumes:
+      - ../mlruns:/mlflow/mlruns
+    environment:
+      - MLFLOW_HOST=0.0.0.0
+      - MLFLOW_PORT=5001
+      - MLFLOW_BACKEND_STORE_URI=sqlite:///mlruns/mlflow.db
+      - MLFLOW_DEFAULT_ARTIFACT_ROOT=/mlflow/mlruns
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:5001/health')"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
   api:
     build:
       context: ..
@@ -8,9 +32,25 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ..:/app
+      - ../data:/app/data
+      - ../models:/app/models
+      - ../results:/app/results
+      - ../mlruns:/app/mlruns
     env_file:
       - .env
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5001
+      - NO_PROXY=localhost,127.0.0.1,mlflow
+    depends_on:
+      mlflow:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+    restart: unless-stopped
 
   ui:
     build:
@@ -20,23 +60,15 @@ services:
     command: ["ui"]
     ports:
       - "8501:8501"
-    depends_on:
-      - api
     volumes:
-      - ..:/app
+      - ../data:/app/data
+      - ../models:/app/models
+      - ../results:/app/results
     env_file:
       - .env
-
-  mlflow:
-    image: python:3.10-slim
-    container_name: mars_mlflow
-    working_dir: /app
-    command: >
-      bash -c "pip install mlflow -q &&
-               mlflow server --host 0.0.0.0 --port 5000
-               --backend-store-uri /app/mlruns
-               --default-artifact-root /app/mlruns"
-    ports:
-      - "5000:5000"
-    volumes:
-      - ..:/app
+    environment:
+      - API_URL=http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
