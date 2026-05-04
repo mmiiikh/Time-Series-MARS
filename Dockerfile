@@ -9,7 +9,6 @@ RUN apt-get update && apt-get install -y \
 
 COPY requirements.docker.txt requirements.txt
 
-# PyTorch CPU-only для aarch64 (Apple Silicon / ARM серверы)
 RUN pip install --no-cache-dir \
     filelock fsspec networkx sympy "typing_extensions>=4.10.0" "Jinja2>=3.1" && \
     pip install --no-cache-dir \
@@ -17,7 +16,6 @@ RUN pip install --no-cache-dir \
     --extra-index-url https://download.pytorch.org/whl/cpu \
     --no-deps
 
-# Остальные зависимости (xgboost==2.1.4 не тянет CUDA пакеты)
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
@@ -28,3 +26,4 @@ ENV OPENBLAS_NUM_THREADS=1
 ENV MKL_NUM_THREADS=1
 
 ENTRYPOINT ["bash", "docker/entrypoint.sh"]
+CMD ["api"]
