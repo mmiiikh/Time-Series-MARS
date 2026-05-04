@@ -4,6 +4,8 @@ set -e
 case "$1" in
   api)
     echo "Starting FastAPI"
+    echo "Pulling data via DVC..."
+    dvc pull || echo "[WARN] dvc pull failed, continuing"
     exec uvicorn src.api.main:app \
       --host 0.0.0.0 \
       --port 8000 \
@@ -19,7 +21,7 @@ case "$1" in
       --server.enableXsrfProtection false
     ;;
   *)
-    echo "Usage"
+    echo "Usage: entrypoint.sh [api|ui]"
     exit 1
     ;;
 esac

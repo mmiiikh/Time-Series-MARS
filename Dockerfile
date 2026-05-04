@@ -18,6 +18,8 @@ RUN pip install --no-cache-dir \
 
 RUN pip install --no-cache-dir -r requirements.txt
 
+RUN pip install --no-cache-dir "dvc[s3]"
+
 COPY . .
 
 ENV PYTHONPATH=/app
