@@ -27,3 +27,4 @@ __pycache__/
 *.pyc
 .venv*/!data/**/*.dvc
 !data/**/.gitignore
+data/raw/mars_data.xlsx
