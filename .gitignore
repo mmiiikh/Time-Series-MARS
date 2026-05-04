@@ -25,4 +25,5 @@ mlruns/
 *.csv
 __pycache__/
 *.pyc
-.venv*/
+.venv*/!data/**/*.dvc
+!data/**/.gitignore
