@@ -27,7 +27,7 @@ np.random.seed(RANDOM_STATE)
 MANIFEST_PATH = SARIMA_DIR / "manifest.json"
 
 
-SARIMAX_EXOG_CANDIDATES = ["NT_Price per kg","Penetration","MT_Universe percent", "NT_CWD", "Frequency", 'Total Mixed Chains - VoD (Vol)']
+SARIMAX_EXOG_CANDIDATES = ["NT_Price per kg","Penetration","MT_Universe percent", "Frequency"]
 
 
 def _get_exog_cols(df: pd.DataFrame) -> list:

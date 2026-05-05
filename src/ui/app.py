@@ -1130,7 +1130,7 @@ def page_forecast(series_list: list[dict]):
         ("NT_Price per kg", "Цена за кг, руб."),
         ("Penetration", "Пенетрация, %"),
         ("MT_Universe percent", "Доля отгруженных магазинов"),
-        ("NT_CWD", "CWD (взв. дистрибуция)")]
+        ("Frequency", "Частота покупок")]
 
     if model_class == "econometric":
         with st.expander("Плановые экзогенные переменные для SARIMAX (необязательно)"):
@@ -1182,7 +1182,7 @@ def page_forecast(series_list: list[dict]):
             else:  # Загрузить файл
                 st.markdown(
                     "**Формат файла** (Excel или CSV):\n"
-                    "| NT_Price per kg | Penetration | MT_Universe percent | NT_CWD |\n"
+                    "| NT_Price per kg | Penetration | MT_Universe percent | Frequency |\n"
                     "|---|---|---|---|\n"
                     f"Количество строк=горизонт ({horizon} мес.)"
                 )
